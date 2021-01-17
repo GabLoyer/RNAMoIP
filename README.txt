@@ -1,6 +1,6 @@
-RNAMoIP 1.1
+RNAMoIP 1.2
 
-	This software runs in command line and is written in python2.7
+	This software runs in command line and is written in python3.7
 	with the GUROBI5.1 python API.
 
 DEPENDANCIES:

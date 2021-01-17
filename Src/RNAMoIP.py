@@ -135,7 +135,6 @@ def getPositionsInsertion(motif, rna):
     else:
         found = found.start()
 
-
     position = [[(found + 1, found + len(motif[0]))]]
     if(len(motif) == 1): #if we can match, and there is only one sequence,
         if found + len(motif[0]) < len(rna):
@@ -174,7 +173,7 @@ def createMotifsDict(rna, pathDesc):
     A special key: MAX hold as value the biggest number of sequence in a motif that can be inserted
     """
     if not os.path.isdir(pathDesc):
-        print 'there is an error with the path to the DESC folder : %s' % pathDesc
+        print('there is an error with the path to the DESC folder : %s' % pathDesc)
         sys.exit()
     dict = {}
     #We go through every .desc file
@@ -203,7 +202,7 @@ def createMotifsDict(rna, pathDesc):
                 dict["max"] = dict["max"] if dict["max"] > len(positions) else len(positions)
 
     if(len(dict) < 2):
-        print "No motif could be inserted.\n"
+        print("No motif could be inserted.\n")
         sys.exit()
 
     return dict
@@ -331,7 +330,7 @@ def constraint_extremities_only_overlap(m, cpts_dict, vars_dict, max_cpts, BASES
             weights = [1.0 for y in range(len(arround))] + [0.75 for y in range(len(over))] + [-0.25 for y in range(len(bp_arround))]
             lin_expr = LinExpr(weights, arround + over + bp_arround)
             lin_expr.addConstant(float(len(bp_arround))*0.25)
-            m.addConstr(1.0001, GRB.GREATER_EQUAL, lin_expr, "only_one_%d" % (z+1))
+            m.addLConstr(1.0001, GRB.GREATER_EQUAL, lin_expr, "only_one_%d" % (z+1))
     return None
 
 def constraint_component_followed(m, cpts_dict, vars_dict, max_cpts):
@@ -340,7 +339,7 @@ def constraint_component_followed(m, cpts_dict, vars_dict, max_cpts):
             for (x,k,l) in cpts_dict["CPTS%dOf%d" % (j+1, i+1)]:
                 next_cpts = [vars_dict["C-%s-%d-%d-%d" % (x2,k2,l2,j+2)] for (x2,k2,l2) in cpts_dict['CPTS%dOf%d' % (j+2, i+1)] if
                         x == x2 and k2 > l + 5]
-                m.addConstr(vars_dict["C-%s-%d-%d-%d" % (x,k,l,j+1)], GRB.LESS_EQUAL, LinExpr([1.0 for z in range(len(next_cpts))], next_cpts),
+                m.addLConstr(vars_dict["C-%s-%d-%d-%d" % (x,k,l,j+1)], GRB.LESS_EQUAL, LinExpr([1.0 for z in range(len(next_cpts))], next_cpts),
                     "Followed%dOf%d-%s-%d-%d" % (j+1, i+1, x, k, l))
     return None
 
@@ -350,7 +349,7 @@ def constraint_component_preceded(m, cpts_dict, vars_dict, max_cpts):
             for (x,k,l) in cpts_dict["CPTS%dOf%d" % (j+2, i+1)]:
                 prev_cpts = [vars_dict["C-%s-%d-%d-%d" % (x2,k2,l2,j+1)] for (x2,k2,l2) in cpts_dict['CPTS%dOf%d' % (j+1, i+1)] if
                         x == x2 and l2 < k - 5]
-                m.addConstr(vars_dict["C-%s-%d-%d-%d" % (x,k,l,j+2)], GRB.LESS_EQUAL, LinExpr([1.0 for z in range(len(prev_cpts))], prev_cpts),
+                m.addLConstr(vars_dict["C-%s-%d-%d-%d" % (x,k,l,j+2)], GRB.LESS_EQUAL, LinExpr([1.0 for z in range(len(prev_cpts))], prev_cpts),
                     "Preceded%dOf%d-%s-%d-%d" % (j+2, i+1, x, k, l))
     return None
 
@@ -362,12 +361,12 @@ def constraint_motifs_entirely_inserted(m, cpts_dict,motifs_names_dict, vars_dic
             for j in range(1,i+1):
                 next_cpts.extend([vars_dict["C-%s-%d-%d-%d" % (x,k,l,j+1)] for (x,k,l) in cpts_dict["CPTS%dOf%d" % (j+1, i+1)] if x == mot])
             weights = [ i for z in range(len(first))] + [-1.0 for z in range(len(next_cpts))]
-            m.addConstr(LinExpr(weights, first + next_cpts), GRB.EQUAL, 0, "AllSeq-%s" % mot)
+            m.addLConstr(LinExpr(weights, first + next_cpts), GRB.EQUAL, 0, "AllSeq-%s" % mot)
     return None
 
 def constraint_max_basepairs_removal(m, BASES, max_bp_removal, vars_dict):
     bps = [vars_dict["D-%d-%d" % (i, j)] for (i, j) in BASES]
-    m.addConstr(LinExpr([1.0 for z in range(len(bps))], bps), GRB.LESS_EQUAL, len(BASES) * max_bp_removal, "max_nb_bp_removed")
+    m.addLConstr(LinExpr([1.0 for z in range(len(bps))], bps), GRB.LESS_EQUAL, len(BASES) * max_bp_removal, "max_nb_bp_removed")
     return None
 
 def constraint_components_surrounded(m, cpts_dict, motifs_names_dict, vars_dict, BASES, max_cpts):
@@ -381,25 +380,25 @@ def constraint_components_surrounded(m, cpts_dict, motifs_names_dict, vars_dict,
                     weights = [-1.0 for z in range(len(bps_arround))] + [1.0 for z in range(len(cpts_arround))]
                     lin_expr = LinExpr(weights, bps_arround + cpts_arround)
                     lin_expr.addConstant(len(bps_arround))
-                    m.addConstr(lin_expr, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-1" % (x,k,l)], "cpt_surrounded-%s-%d-%d-1" %(x,k,l))
+                    m.addLConstr(lin_expr, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-1" % (x,k,l)], "cpt_surrounded-%s-%d-%d-1" %(x,k,l))
                 else:
-                    m.addConstr(0, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-1" % (x,k,l)], "cpt_surrounded-%s-%d-%d-1" %(x,k,l))
+                    m.addLConstr(0, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-1" % (x,k,l)], "cpt_surrounded-%s-%d-%d-1" %(x,k,l))
             else:
                 bps_arround = [vars_dict["D-%d-%d" % (u,v)] for (u,v) in BASES if k >= u >= k-1 or l <= u <= l+1 or k >= v >= k-1 or l <= v <= l + 1 ]
                 if len(bps_arround) > 0:
                     weights = [-1.0 for z in range(len(bps_arround))]
                     lin_expr = LinExpr(weights, bps_arround)
                     lin_expr.addConstant(len(bps_arround))
-                    m.addConstr(lin_expr, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-%d" % (x,k,l, i+1)], "cpt_surrounded-%s-%d-%d-%d" %(x,k,l,i+1))
+                    m.addLConstr(lin_expr, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-%d" % (x,k,l, i+1)], "cpt_surrounded-%s-%d-%d-%d" %(x,k,l,i+1))
                 else:
-                    m.addConstr(0, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-%d" % (x,k,l, i+1)], "cpt_surrounded-%s-%d-%d-%d" %(x,k,l,i+1))
+                    m.addLConstr(0, GRB.GREATER_EQUAL, vars_dict["C-%s-%d-%d-%d" % (x,k,l, i+1)], "cpt_surrounded-%s-%d-%d-%d" %(x,k,l,i+1))
     return None
 
 def constraint_most_one_motif_more_3_cpts(m, cpts_dict, vars_dict, max_cpts):
     motifs_list = []
     for i in range(2,max_cpts):
         motifs_list.extend([vars_dict["C-%s-%d-%d-1" % (x,k,l)] for (x,k,l) in cpts_dict["CPTS1Of%d" % (i+1)]])
-        m.addConstr(LinExpr([1.0 for z in range(len(motifs_list))], motifs_list), GRB.LESS_EQUAL, 1, "1MotOf3Seqs")
+        m.addLConstr(LinExpr([1.0 for z in range(len(motifs_list))], motifs_list), GRB.LESS_EQUAL, 1, "1MotOf3Seqs")
     return None
 
 def constraint_interior_loops_arround_well_balanced(m, BASES, cpts_dict, vars_dict, motifs_names_dict, rna_len):
@@ -410,8 +409,8 @@ def constraint_interior_loops_arround_well_balanced(m, BASES, cpts_dict, vars_di
             first = [vars_dict["C-%s-%d-%d-1" % (x,k,l)] for (x,k,l) in cpts_dict['CPTS1Of2'] if mot == x and (l < u or k > v)]
             second = [vars_dict["C-%s-%d-%d-2" % (x,k,l)] for (x,k,l) in cpts_dict['CPTS2Of2'] if mot == x and (l < u or k > v)]
             weights = [1.0 for z in range(len(first))] + [-1.0 for z in range(len(second))]
-            m.addConstr(LinExpr([-rna_len], [vars_dict["D-%d-%d" % (u,v)]]), GRB.LESS_EQUAL, LinExpr(weights, first + second), "2_cpts_consistend_left-%d-%d" % (u,v))
-            m.addConstr(LinExpr([rna_len], [vars_dict["D-%d-%d" % (u,v)]]), GRB.GREATER_EQUAL, LinExpr(weights, first + second), "2_cpts_consistend_left-%d-%d" % (u,v))
+            m.addLConstr(LinExpr([-rna_len], [vars_dict["D-%d-%d" % (u,v)]]), GRB.LESS_EQUAL, LinExpr(weights, first + second), "2_cpts_consistend_left-%d-%d" % (u,v))
+            m.addLConstr(LinExpr([rna_len], [vars_dict["D-%d-%d" % (u,v)]]), GRB.GREATER_EQUAL, LinExpr(weights, first + second), "2_cpts_consistend_left-%d-%d" % (u,v))
     return None
 
 def constraint_3_way(m, cpts_dict, vars_dict, BASES, motifs_names_dict, rna_len):
@@ -427,8 +426,8 @@ def constraint_3_way(m, cpts_dict, vars_dict, BASES, motifs_names_dict, rna_len)
         tot_part.extend(first_part)
         tot_part.extend(second_part)
         tot_part.extend(third_part)
-        m.addConstr(LinExpr(coeffs, tot_part), GRB.LESS_EQUAL, LinExpr( [rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "+3_way_between_D-%d-%d" % (k,l))
-        m.addConstr(LinExpr(coeffs, tot_part), GRB.GREATER_EQUAL, LinExpr( [-rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "-3_way_between_D-%d-%d" % (k,l))
+        m.addLConstr(LinExpr(coeffs, tot_part), GRB.LESS_EQUAL, LinExpr( [rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "+3_way_between_D-%d-%d" % (k,l))
+        m.addLConstr(LinExpr(coeffs, tot_part), GRB.GREATER_EQUAL, LinExpr( [-rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "-3_way_between_D-%d-%d" % (k,l))
 
 def constraint_4_way(m, cpts_dict, vars_dict, BASES, motifs_names_dict, rna_len):
     for (k,l) in BASES:
@@ -443,8 +442,8 @@ def constraint_4_way(m, cpts_dict, vars_dict, BASES, motifs_names_dict, rna_len)
         tot_part.extend(second_part)
         tot_part.extend(third_part)
         tot_part.extend(fourth_part)
-        m.addConstr(LinExpr(coeffs, tot_part), GRB.LESS_EQUAL, LinExpr( [rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "+4_way_between_D-%d-%d" % (k,l))
-        m.addConstr(LinExpr(coeffs, tot_part), GRB.GREATER_EQUAL, LinExpr( [-rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "-4_way_between_D-%d-%d" % (k,l))
+        m.addLConstr(LinExpr(coeffs, tot_part), GRB.LESS_EQUAL, LinExpr( [rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "+4_way_between_D-%d-%d" % (k,l))
+        m.addLConstr(LinExpr(coeffs, tot_part), GRB.GREATER_EQUAL, LinExpr( [-rna_len] ,[vars_dict["D-%d-%d" % (k,l)]]), "-4_way_between_D-%d-%d" % (k,l))
 
 def constraint_no_lonely_bp(m, vars_dict, BASES, rna_len):
     #First border cases
@@ -458,7 +457,7 @@ def constraint_no_lonely_bp(m, vars_dict, BASES, rna_len):
         lin_expr.addConstant(len(before_after))
     else:
         lin_expr.addConstant(len(before_after) + 1)
-    m.addConstr(1, GRB.LESS_EQUAL, lin_expr, "stack_bp_%d" % i)
+    m.addLConstr(1, GRB.LESS_EQUAL, lin_expr, "stack_bp_%d" % i)
     #i == rna_len 
     i = rna_len 
     before_after = [vars_dict['D-%d-%d' % (u,v)] for (u,v) in BASES if u == i - 1 or v == i - 1]
@@ -479,9 +478,9 @@ def constraint_no_lonely_bp(m, vars_dict, BASES, rna_len):
             lin_expr.addConstant(len(before_after))
         else:
             lin_expr.addConstant(len(before_after) + 1)
-        m.addConstr(1, GRB.LESS_EQUAL, lin_expr, "stack_bp_%d" % i)
+        m.addLConstr(1, GRB.LESS_EQUAL, lin_expr, "stack_bp_%d" % i)
 
-def constraint_cover_more_bp(model, cpts_dict, vars_dict, BASES, motifs_names_dict ):
+def constraint_cover_more_bp(model, cpts_dict, vars_dict, BASES, motifs_names_dict):
     for mot in motifs_names_dict['MOTIFS2']:
         for (x,k,l) in ( (x2,k2,l2) for (x2,k2,l2) in cpts_dict['CPTS1Of2'] if x2 == mot):
             for (y,m,n) in ( (x2,k2,l2) for (x2,k2,l2) in cpts_dict['CPTS2Of2'] if x2 == mot and k2 > l + 3):
@@ -489,7 +488,7 @@ def constraint_cover_more_bp(model, cpts_dict, vars_dict, BASES, motifs_names_di
                 bases_inside = [(u,v) for (u,v) in BASES if u in coverage and v in coverage]
                 bases = [(u,v) for (u,v) in BASES if u in coverage or v in coverage and (u,v) not in bases_inside]
                 if  len(coverage)-1  <= 2*len(bases_inside)+len(bases):
-                    model.addConstr(LinExpr([1,1], [vars_dict['C-%s-%d-%d-1' % (mot, k,l)], vars_dict['C-%s-%d-%d-2' % (mot, m, n)]]), GRB.LESS_EQUAL, 1)
+                    model.addLConstr(LinExpr([1,1], [vars_dict['C-%s-%d-%d-1' % (mot, k,l)], vars_dict['C-%s-%d-%d-2' % (mot, m, n)]]), GRB.LESS_EQUAL, 1)
 
 def gurobi_create_model(motifs_dict, secStructPos, rna, max_bp_removal):
     """
@@ -571,8 +570,8 @@ def gurobi_find_all_optimal_solutions(motifs_dict, sec_struct_pos, rna, max_bp_r
     m.optimize()
 
     if m.Status != GRB.Status.OPTIMAL:
-            print '-------------------------'
-            print ' NO SOLUTIONS!'
+            print('-------------------------')
+            print(' NO SOLUTIONS!')
             sys.exit(0)
 
     min_val = m.ObjVal
@@ -597,12 +596,12 @@ def gurobi_find_all_optimal_solutions(motifs_dict, sec_struct_pos, rna, max_bp_r
         tot_sols = in_sol + not_in_sol
         lin_expr = LinExpr(weights, tot_sols)
         list_of_lin_expr.append(lin_expr)
-        m.addConstr(lin_expr, GRB.GREATER_EQUAL, -len(in_sol) + 1)
+        m.addLConstr(lin_expr, GRB.GREATER_EQUAL, -len(in_sol) + 1)
         m.update()
-        print '\n#########################\n'
+        print('\n#########################\n')
         m.optimize()
         if not m.Objval or m.ObjVal > min_val + 0.5:
-            print "\nAll Optimal Solutions have been found\nNext best score: %s\n" % m.Objval 
+            print("\nAll Optimal Solutions have been found\nNext best score: %s\n" % m.Objval )
             break
 
     return m, model_list_of_dicts, list_sols, list_of_lin_expr, min_val
@@ -684,20 +683,20 @@ def help(rna_seq='',
          required_arg='',
          max_nb_sols=''):
     if rna_seq:
-        print 'The RNA sequence should only contain the characters "ACGU"\n'
+        print('The RNA sequence should only contain the characters "ACGU"\n')
     if sec_struct:
-        print """The secondary structure should only contain the characters "(.)"
-            and be a well balanced parenthese equation\n"""
+        print("""The secondary structure should only contain the characters "(.)"
+            and be a well balanced parenthese equation\n""")
     if max_bp_removal:
-        print "The max number of base pairs should be between 0 and 1\n"
+        print("The max number of base pairs should be between 0 and 1\n")
     if max_components:
-        print "The number of components should be greater than 3\n"
+        print("The number of components should be greater than 3\n")
     if required_arg:
-        print "A required argument is missing\n"
+        print("A required argument is missing\n")
     if max_nb_sols:
-        print "The maximal number of solutions should be bigger than 0\n"
+        print("The maximal number of solutions should be bigger than 0\n")
 
-    print """ RNAMoIP v1.1
+    print(""" RNAMoIP v1.2
         ARGUMENTS 
           REQUIRED:
             -s The rna Sequence 
@@ -717,7 +716,7 @@ def help(rna_seq='',
         gurobi.sh RNAMoIP.py -s 'GGGCGGCCUUCGGGCUAGACGGUGGGAGAGGCUUCGGCUGGUCCACCCGUGACGCUC' -ss '((((((((....))))..((((..(((..(((....)))..)))..))))...))))' -d 'No_Redondance_DESC' > my_output.txt
 
         gurobi.sh RNAMoIP.py -s 'GGGCGGCCUUCGGGCUAGACGGUGGGAGAGGCUUCGGCUGGUCCACCCGUGACGCUC' -ss "/path/to/sec/struct/list.tt" -d 'No_Redondance_DESC' -r 0.4 -m_sols 5  > my_output.txt
-    """
+    """)
 
 if __name__ == '__main__':
     rna_seq = ''
@@ -742,7 +741,7 @@ if __name__ == '__main__':
         elif option == '-m_sols':
             max_nb_sols = validate_max_nb_sols(opts[i+1])
         elif option in ('-h','-help'):
-            print help()
+            print(help())
             sys.exit(0)
     if not all((rna_seq,
                 l_sec_struct_positions,
@@ -770,14 +769,15 @@ if __name__ == '__main__':
     for list_sols,val,sec_struct in all_sols:
         if val > min_val:
             break
-        print "Solution for the secondary structure:"
-        print "\t%s" %  sec_struct
+        print("Solution for the secondary structure:")
+        print("\t%s" %  sec_struct)
         for i in range(len(list_sols)):
-            print
-            print 'Optimal solution nb: ',i + 1
-            print 'Corrected secondary structure:'
-            print "\t%s" % remove_deleted(sec_struct,list_sols[i])
+            print()
+            print('Optimal solution nb: ',i + 1)
+            print('Corrected secondary structure:')
+            print("\t%s" % remove_deleted(sec_struct,list_sols[i]))
             for name in list_sols[i]:
-                print '\t', name
+                print('\t', name)
 
-    print "\nThe optimal solutions has as value:\n\t%s" % min_val,
+    print("\nThe optimal solutions has as value:\n\t%s" % min_val,)
+
